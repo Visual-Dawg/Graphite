@@ -31,7 +31,7 @@
 
 	let rulerHorizontal: RulerInput | undefined;
 	let rulerVertical: RulerInput | undefined;
-	let viewport: HTMLDivElement | undefined;
+	let viewport: LayoutRow | undefined;
 
 	const editor = getContext<Editor>("editor");
 	const document = getContext<DocumentState>("document");
@@ -164,7 +164,7 @@
 	function canvasPointerDown(e: PointerEvent) {
 		const onEditbox = e.target instanceof HTMLDivElement && e.target.contentEditable;
 
-		if (!onEditbox) viewport?.setPointerCapture(e.pointerId);
+		if (!onEditbox) viewport?.div()?.setPointerCapture(e.pointerId);
 		if (window.document.activeElement instanceof HTMLElement) {
 			window.document.activeElement.blur();
 		}
@@ -481,7 +481,7 @@
 							y={cursorTop}
 						/>
 					{/if}
-					<div class="viewport" on:pointerdown={(e) => canvasPointerDown(e)} on:dragover={(e) => e.preventDefault()} on:drop={(e) => pasteFile(e)} bind:this={viewport} data-viewport>
+					<LayoutRow class="viewport" on:pointerdown={(e) => canvasPointerDown(e)} on:dragover={(e) => e.preventDefault()} on:drop={(e) => pasteFile(e)} bind:this={viewport} data-viewport>
 						<svg class="artboards" style:width={canvasWidthCSS} style:height={canvasHeightCSS}>
 							{@html artworkSvg}
 						</svg>
@@ -492,10 +492,8 @@
 						</div>
 						<canvas class="overlays" width={canvasWidthRoundedToEven} height={canvasHeightRoundedToEven} style:width={canvasWidthCSS} style:height={canvasHeightCSS} data-overlays-canvas>
 						</canvas>
-					</div>
-					<div class="graph-view" class:open={$document.graphViewOverlayOpen} style:--fade-artwork="80%" data-graph>
-						<Graph />
-					</div>
+					</LayoutRow>
+					<Graph open={$document.graphViewOverlayOpen} fadeArtworkPercent={80} />
 				</LayoutCol>
 				<LayoutCol class="ruler-or-scrollbar right-scrollbar">
 					<ScrollbarInput
@@ -715,7 +713,12 @@
 						}
 					}
 
-					.graph-view {
+					.graph {
+						position: absolute;
+						top: 0;
+						left: 0;
+						width: 100%;
+						height: 100%;
 						pointer-events: none;
 						transition: opacity 0.2s ease-in-out;
 						opacity: 0;
@@ -725,27 +728,6 @@
 							pointer-events: auto;
 							opacity: 1;
 						}
-
-						&::before {
-							content: "";
-							position: absolute;
-							top: 0;
-							left: 0;
-							width: 100%;
-							height: 100%;
-							background: var(--color-2-mildblack);
-							opacity: var(--fade-artwork);
-							pointer-events: none;
-						}
-					}
-
-					.fade-artwork,
-					.graph {
-						position: absolute;
-						top: 0;
-						left: 0;
-						width: 100%;
-						height: 100%;
 					}
 				}
 			}
