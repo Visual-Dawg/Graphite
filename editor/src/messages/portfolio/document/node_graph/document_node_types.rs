@@ -622,7 +622,8 @@ fn static_nodes() -> Vec<DocumentNodeDefinition> {
 		DocumentNodeDefinition {
 			name: "Mask",
 			category: "Raster",
-			implementation: DocumentNodeImplementation::proto("graphene_std::raster::MaskImageNode<_, _, _>"),
+			implementation: DocumentNodeImplementation::proto("graphene_std::raster::MaskImageNode<_, _, _, _>"),
+			manual_composition: Some(concrete!(Footprint)),
 			inputs: vec![
 				DocumentInputType::value("Image", TaggedValue::ImageFrame(ImageFrame::empty()), true),
 				DocumentInputType::value("Stencil", TaggedValue::ImageFrame(ImageFrame::empty()), true),

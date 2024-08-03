@@ -189,28 +189,33 @@ where
 }
 
 #[derive(Debug, Clone, Copy)]
-pub struct MaskImageNode<P, S, Stencil> {
+pub struct MaskImageNode<P, S, InputImage, Stencil> {
+	image: InputImage,
 	stencil: Stencil,
 	_p: PhantomData<P>,
 	_s: PhantomData<S>,
 }
 
 #[node_macro::node_fn(MaskImageNode<_P, _S>)]
-fn mask_image<
+async fn mask_image<
 	// _P is the color of the input image. It must have an alpha channel because that is going to
 	// be modified by the mask
-	_P: Copy + Alpha,
+	_P: Copy + Alpha + std::marker::Sync,
 	// _S is the color of the stencil. It must have a luminance channel because that is used to
 	// mask the input image
-	_S: Luminance,
+	_S: Luminance + std::marker::Sync,
 	// Input image
-	Input: Transform + BitmapMut<Pixel = _P>,
+	InputImage: Transform + BitmapMut<Pixel = _P> + Send,
 	// Stencil
-	Stencil: Transform + Sample<Pixel = _S>,
+	Stencil: Transform + Sample<Pixel = _S> + Send,
 >(
-	mut image: Input,
-	stencil: Stencil,
-) -> Input {
+	footprint: Footprint,
+	image: impl Node<crate::transform::Footprint, Output = InputImage>,
+	stencil: impl Node<crate::transform::Footprint, Output = Stencil>,
+) -> InputImage {
+	let mut image = self.image.eval(footprint).await;
+	let stencil = self.stencil.eval(footprint).await;
+
 	let image_size = DVec2::new(image.width() as f64, image.height() as f64);
 	let mask_size = stencil.transform().decompose_scale();
 
