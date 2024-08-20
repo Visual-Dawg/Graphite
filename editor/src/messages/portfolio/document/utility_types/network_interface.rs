@@ -407,12 +407,12 @@ impl NodeNetworkInterface {
 					};
 				} else {
 					// Disconnect node input if it is not connected to another node in new_ids
-					let tagged_value = TaggedValue::from_type(&self.input_type(&InputConnector::node(*node_id, input_index), network_path));
+					let tagged_value = TaggedValue::from_type_or_none(&self.input_type(&InputConnector::node(*node_id, input_index), network_path));
 					*input = NodeInput::value(tagged_value, true);
 				}
 			} else if let &mut NodeInput::Network { .. } = input {
 				// Always disconnect network node input
-				let tagged_value = TaggedValue::from_type(&self.input_type(&InputConnector::node(*node_id, input_index), network_path));
+				let tagged_value = TaggedValue::from_type_or_none(&self.input_type(&InputConnector::node(*node_id, input_index), network_path));
 				*input = NodeInput::value(tagged_value, true);
 			}
 		}
@@ -681,7 +681,8 @@ impl NodeNetworkInterface {
 						let data_type = FrontendGraphDataType::with_type(&input_type);
 
 						let import_name = if import_name.is_empty() {
-							TaggedValue::from_type(&input_type).ty().to_string()
+							// TODO: Should this just return input_type.to_string() instead?
+							TaggedValue::from_type_or_none(&input_type).ty().to_string()
 						} else {
 							import_name
 						};
@@ -772,7 +773,7 @@ impl NodeNetworkInterface {
 					} else {
 						input_type
 							.clone()
-							.map(|input_type| TaggedValue::from_type(&input_type).ty().to_string())
+							.map(|input_type| TaggedValue::from_type_or_none(&input_type).ty().to_string())
 							.unwrap_or(format!("Export {}", export_index + 1))
 					};
 
@@ -3200,7 +3201,7 @@ impl NodeNetworkInterface {
 			}
 		}
 
-		let tagged_value = TaggedValue::from_type(&self.input_type(input_connector, network_path));
+		let tagged_value = TaggedValue::from_type_or_none(&self.input_type(input_connector, network_path));
 
 		let value_input = NodeInput::value(tagged_value, true);
 
