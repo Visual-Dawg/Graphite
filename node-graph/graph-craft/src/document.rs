@@ -1120,7 +1120,12 @@ impl NodeNetwork {
 		for export in inputs {
 			let export: &mut NodeInput = export;
 			let previous_export = std::mem::replace(export, NodeInput::network(concrete!(()), 0));
-			if let NodeInput::Value { tagged_value, exposed } = previous_export {
+			if let NodeInput::Value { mut tagged_value, exposed } = previous_export {
+				if matches!(*tagged_value, TaggedValue::OptionalNodeId(None)) {
+					if let Some(encapsulating_layer) = path.last() {
+						tagged_value = TaggedValue::OptionalNodeId(Some(encapsulating_layer.0)).into();
+					}
+				};
 				let value_node_id = gen_id();
 				let merged_node_id = map_ids(id, value_node_id);
 				let mut original_location = OriginalLocation {
