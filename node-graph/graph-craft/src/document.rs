@@ -4,6 +4,7 @@ use crate::proto::{ConstructionArgs, ProtoNetwork, ProtoNode, ProtoNodeInput};
 use dyn_any::{DynAny, StaticType};
 use graphene_core::memo::MemoHashGuard;
 pub use graphene_core::uuid::generate_uuid;
+
 use graphene_core::{Cow, MemoHash, ProtoNodeIdentifier, Type};
 
 use glam::IVec2;
@@ -13,23 +14,7 @@ use std::collections::HashMap;
 use std::hash::{Hash, Hasher};
 
 pub mod value;
-
-#[repr(transparent)]
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash, PartialOrd, Ord, serde::Serialize, serde::Deserialize, specta::Type)]
-pub struct NodeId(pub u64);
-
-// TODO: Find and replace all `NodeId(generate_uuid())` with `NodeId::new()`.
-impl NodeId {
-	pub fn new() -> Self {
-		Self(generate_uuid())
-	}
-}
-
-impl core::fmt::Display for NodeId {
-	fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-		write!(f, "{}", self.0)
-	}
-}
+pub use graphene_core::uuid::NodeId;
 
 /// Hash two IDs together, returning a new ID that is always consistant for two input IDs in a specific order.
 /// This is used during [`NodeNetwork::flatten`] in order to ensure consistant yet non-conflicting IDs for inner networks.
@@ -1122,8 +1107,9 @@ impl NodeNetwork {
 			let previous_export = std::mem::replace(export, NodeInput::network(concrete!(()), 0));
 			if let NodeInput::Value { mut tagged_value, exposed } = previous_export {
 				if matches!(*tagged_value, TaggedValue::OptionalNodeId(None)) {
-					if let Some(encapsulating_layer) = path.last() {
-						tagged_value = TaggedValue::OptionalNodeId(Some(encapsulating_layer.0)).into();
+					log::debug!("id: {id} path: {path:?}");
+					if let Some(encapsulating_layer) = path.get((path.len() - 2).max(0) as usize) {
+						tagged_value = TaggedValue::OptionalNodeId(Some(*encapsulating_layer)).into();
 					}
 				};
 				let value_node_id = gen_id();
